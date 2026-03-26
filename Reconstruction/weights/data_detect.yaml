@@ -1,0 +1,9 @@
+# Dataset cho Object Detection (YOLO detect)
+# path: relative to CWD
+path: detect
+train: train/images
+val: valid/images
+test: test/images
+
+nc: 15
+names: ['Black_Advisor', 'Black_Bishop', 'Black_Cannon', 'Black_King', 'Black_Knight', 'Black_Pawn', 'Black_Rook', 'Red_Advisor', 'Red_Bishop', 'Red_Cannon', 'Red_King', 'Red_Knight', 'Red_Pawn', 'Red_Rook', 'board']

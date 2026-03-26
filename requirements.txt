@@ -1,0 +1,17 @@
+# Core UI / game engine
+pygame==2.6.1
+
+# Computer vision & image processing
+opencv-python==4.12.0.88
+numpy==2.2.6
+Pillow==12.1.0
+mss==10.1.0
+
+# AI / detection
+torch==2.8.0
+ultralytics==8.4.6
+
+# Configuration & utilities
+cryptography==46.0.3
+PyYAML==6.0.3
+pyperclip==1.11.0
