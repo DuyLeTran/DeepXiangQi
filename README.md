@@ -8,6 +8,25 @@ A desktop **Xiangqi (Chinese Chess)** application built with Python and Pygame, 
 
 ---
 
+## Research Paper
+
+This project is accompanied by a research paper describing the AI pipeline design, model training, and evaluation results. If you want to learn more about the technical approach — including the dual-model detection strategy, homography-based board localization, and the piece-position correction algorithm — please refer to the paper:
+
+[**"Xiangqi Board Reconstruction Using Computer Vision and Deep Learning"**](https://drive.google.com/file/d/1lIpAoEM14-YhtANV4rW6AdYe1Z6EWL3e/view?usp=sharing)
+
+
+**Dataset (Roboflow):** [XiangQi Dataset](https://universe.roboflow.com/duytranle/xiangqi-ubjij/dataset/18)
+
+The paper covers:
+
+- Dataset collection and annotation for Xiangqi piece detection
+- YOLO-based dual-model detection pipeline
+- YOLO Pose for board corner keypoint estimation
+- Homography projection to map piece positions onto a virtual grid
+- Rule-based position correction for invalid placements
+
+---
+
 ## Features
 
 - **Interactive gameplay** — play Xiangqi with full rule enforcement (valid moves, check, checkmate detection)
@@ -70,7 +89,7 @@ XiangQi/
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/your-username/DeepXiangQi.git
+git clone https://github.com/DuyLeTran/DeepXiangQi.git
 cd DeepXiangQi
 ```
 
@@ -186,23 +205,6 @@ Open `App/configuration.py` to adjust settings:
 | `DEVICE`              | `'cpu'` | Inference device — `'cpu'` is recommended; `'cuda'` only if GPU is available |
 | `SHOW_UPLOADED_IMAGE` | `False` | Preview uploaded image in a separate window                                  |
 
-
----
-
-## Research Paper
-
-This project is accompanied by a research paper describing the AI pipeline design, model training, and evaluation results. If you want to learn more about the technical approach — including the dual-model detection strategy, homography-based board localization, and the piece-position correction algorithm — please refer to the paper:
-
-> **"Xiangqi Board Reconstruction Using Computer Vision and Deep Learning"**  
-> *(Contact the author for the full paper or check the Releases section of this repository.)*
-
-The paper covers:
-
-- Dataset collection and annotation for Xiangqi piece detection
-- YOLO-based dual-model detection pipeline
-- YOLO Pose for board corner keypoint estimation
-- Homography projection to map piece positions onto a virtual grid
-- Rule-based position correction for invalid placements
 
 ---
 
