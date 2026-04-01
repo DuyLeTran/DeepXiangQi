@@ -4,30 +4,24 @@ class Position:
     @staticmethod
     def calculate_position(pos: tuple[int, int]) -> tuple[int, int]:
         x, y = pos
-        # Apply scaling factor when in setup mode
-        scale = Settings.SETUP_BOARD_SCALE if getattr(Settings, "SETUP_MODE", False) else 1.0
+        board_scale = Settings.BOARD_SCALE
+        setup_scale = Settings.SETUP_BOARD_SCALE if getattr(Settings, "SETUP_MODE", False) else 1.0
+        total_scale = board_scale * setup_scale
 
         if Settings.SETUP_MODE:
-            # Calculate positions in setup mode (background is scaled and centered)
-            scaled_width = int(Settings.WIDTH * scale)
-            scaled_height = int(Settings.HEIGHT * scale)
-            bg_x = (Settings.WIDTH - scaled_width) // 2
-            bg_y = 50 + (Settings.HEIGHT - scaled_height) // 2
-
-            # In the original image, the center of cell (1,0) is 45px from the top (95 - 50),
-            # so after scaling the offset is 45 * scale on both axes.
-            offset_x = 45 * scale
-            offset_y = 45 * scale
-
-            # Actual screen position of the first cell origin
+            scaled_width = int(Settings.BASE_WIDTH * total_scale)
+            scaled_height = int(Settings.BASE_HEIGHT * total_scale)
+            bg_x = Settings.BOARD_X + (Settings.WIDTH - scaled_width) // 2
+            bg_y = Settings.BOARD_Y + (Settings.HEIGHT - scaled_height) // 2
+            offset_x = 45 * total_scale
+            offset_y = 45 * total_scale
             base_x = bg_x + offset_x
             base_y = bg_y + offset_y
-            spacing = 90 * scale
+            spacing = 90 * total_scale
         else:
-            # Normal mode
-            base_x = 45
-            base_y = 95
-            spacing = 90
+            base_x = Settings.BOARD_X + 45 * board_scale
+            base_y = Settings.BOARD_Y + 45 * board_scale
+            spacing = 90 * board_scale
 
         # Handle flip: only flip positions that are on the board, not off-board positions
         if Settings.FLIPPED and (1 <= x <= 9) and (0 <= y <= 9):
@@ -41,22 +35,22 @@ class Position:
 
     @staticmethod
     def check_valid_position(pos: tuple[int, int]) -> tuple[tuple[int, int], bool]:
-        # Apply scaling factor when in setup mode
-        scale = Settings.SETUP_BOARD_SCALE if getattr(Settings, "SETUP_MODE", False) else 1.0
+        board_scale = Settings.BOARD_SCALE
+        setup_scale = Settings.SETUP_BOARD_SCALE if getattr(Settings, "SETUP_MODE", False) else 1.0
+        total_scale = board_scale * setup_scale
 
         if Settings.SETUP_MODE:
-            # Calculate positions in setup mode (background is scaled and centered)
-            scaled_width = int(Settings.WIDTH * scale)
-            scaled_height = int(Settings.HEIGHT * scale)
-            bg_x = (Settings.WIDTH - scaled_width) // 2
-            bg_y = 50 + (Settings.HEIGHT - scaled_height) // 2
+            scaled_width = int(Settings.BASE_WIDTH * total_scale)
+            scaled_height = int(Settings.BASE_HEIGHT * total_scale)
+            bg_x = Settings.BOARD_X + (Settings.WIDTH - scaled_width) // 2
+            bg_y = Settings.BOARD_Y + (Settings.HEIGHT - scaled_height) // 2
 
-            offset_x = 45 * scale
-            offset_y = 45 * scale
+            offset_x = 45 * total_scale
+            offset_y = 45 * total_scale
 
             base_x = bg_x + offset_x
             base_y = bg_y + offset_y
-            spacing = 90 * scale
+            spacing = 90 * total_scale
             
             # Click tolerance radius in cell units, always 0.45 cells
             tolerance = 0.45
@@ -107,10 +101,9 @@ class Position:
             
             return (x, y), False
         else:
-            # Normal mode
-            base_x = 45
-            base_y = 95
-            spacing = 90
+            base_x = Settings.BOARD_X + 45 * board_scale
+            base_y = Settings.BOARD_Y + 45 * board_scale
+            spacing = 90 * board_scale
             # Click tolerance radius in cell units, always 0.45 cells
             tolerance = 0.45
 

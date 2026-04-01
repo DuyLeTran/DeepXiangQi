@@ -39,6 +39,11 @@ class RecordView:
         self.dropdown_open_for_node: Node | None = None  # Node whose dropdown is currently open
         self.dropdown_rect: pygame.Rect | None = None  # Dropdown position rect
         self.dropdown_item_rects: list[pygame.Rect] = []  # Rects for each dropdown item
+    
+    def set_viewport(self, viewport: pygame.Rect) -> None:
+        self.viewport = viewport
+        self.panel_x = viewport.x
+        self.panel_w = viewport.width
 
     def sync_with_tree(self) -> None:
         """Sync items list with the main line in the game tree. Shows all moves and highlights the current one."""
@@ -93,11 +98,14 @@ class RecordView:
 
     def draw_header(self) -> None:
         """Draw table header: 'STT' | 'Nước cờ' | 'Ghi chú' in the right panel."""
+        if self.viewport.width <= 0 or self.viewport.height <= 0:
+            return
         # Right panel panel at x ~ 809, width ~ 592, height ~ 850 (per renderer border)
         base_x = self.panel_x
         base_y = self.viewport.top
-        # Widths sum should fit within ~592; leave a small margin
-        col_widths = [110, 220, 260]  # total 560
+        total_w = self.panel_w
+        col_widths = [int(total_w * 0.2), int(total_w * 0.4), int(total_w * 0.4)]
+        col_widths[-1] = total_w - col_widths[0] - col_widths[1]
         col_labels = ["STT", "Nước cờ", "Ghi chú"]
         row_h = self.header_h
 
@@ -195,6 +203,8 @@ class RecordView:
 
     def draw_list(self) -> None:
         """Draw rows within the viewport, clipped, and a scrollbar."""
+        if self.viewport.width <= 0 or self.viewport.height <= 0:
+            return
         # Clip to list area only (below header), not entire viewport
         list_area = pygame.Rect(self.panel_x, self.viewport.top + self.header_h, 
                                self.panel_w, self.viewport.height - self.header_h)
@@ -202,7 +212,8 @@ class RecordView:
         self.screen.set_clip(list_area)
 
         # Columns: match header widths
-        col_widths = [110, 220, 260]
+        col_widths = [int(self.panel_w * 0.2), int(self.panel_w * 0.4), int(self.panel_w * 0.4)]
+        col_widths[-1] = self.panel_w - col_widths[0] - col_widths[1]
         x = self.panel_x
         # y_start: position of first row (index 1) relative to list area start
         y_start = self.viewport.top + self.header_h - self.scroll_offset

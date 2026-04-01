@@ -10,13 +10,20 @@ class BookView:
         self.screen = screen
         self.font_path = font_path
         self.header_font = pygame.font.Font(self.font_path, 28)
+        self.viewport = pygame.Rect(810, 50, 592, 850)
+
+    def set_viewport(self, viewport: pygame.Rect) -> None:
+        self.viewport = viewport
 
     def draw_header(self) -> None:
         """Draw table header: 'Nước cờ' | 'Điểm' | 'Hợp lệ' | 'Ghi chú' in the right panel."""
-        # Right panel origin is x ~ 809, panel width ~ 592, height ~ 850 (from renderer border)
-        base_x = 810
-        base_y = 50
-        col_widths = [180, 100, 100, 210]  # total 570, fits inside 592 panel width
+        if self.viewport.width <= 0 or self.viewport.height <= 0:
+            return
+        base_x = self.viewport.x
+        base_y = self.viewport.y
+        total_w = self.viewport.width
+        col_widths = [int(total_w * 0.32), int(total_w * 0.17), int(total_w * 0.17), int(total_w * 0.34)]
+        col_widths[-1] = total_w - sum(col_widths[:-1])
         col_labels = ["Nước cờ", "Điểm", "Hợp lệ", "Ghi chú"]
         row_h = 40
 

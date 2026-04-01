@@ -28,13 +28,11 @@ try:
     screen_w = full_screen.current_w  # screen width
     screen_h = full_screen.current_h  # screen height
 
-    # Game window size from settings
-    width = Settings.WIDTH
-    height = Settings.HEIGHT
-
-    # Calculate total window size including UI panels
-    window_w = width + 590   # extra width for the right-side panel
-    window_h = height + 50   # extra height for the header bar or margin
+    # Base game window size (auto-shrink on small displays)
+    base_window_w = Settings.BASE_WIDTH + Settings.BASE_PANEL_WIDTH
+    base_window_h = Settings.BASE_HEIGHT + Settings.HEADER_HEIGHT
+    window_w = min(base_window_w, max(900, screen_w - 40))
+    window_h = min(base_window_h, max(700, screen_h - 80))
 
     # Center window horizontally
     x = (screen_w - window_w) // 2
@@ -49,12 +47,10 @@ except Exception:
     pass
 
 
-width = Settings.WIDTH
-height = Settings.HEIGHT
 FPS = Settings.FPS
 
-# screen = pygame.display.set_mode((width + 590, height + 50), pygame.RESIZABLE)
-screen = pygame.display.set_mode((width + 590, height + 50))
+Settings.update_window_size(window_w, window_h)
+screen = pygame.display.set_mode((Settings.WINDOW_WIDTH, Settings.WINDOW_HEIGHT), pygame.RESIZABLE)
 pygame.display.set_caption("XiangQi Chess")
 
 try:
@@ -64,7 +60,6 @@ except:
     print("Warning: Could not load icon.png")
 
 background = pygame.image.load('board/board.jpg')
-background = pygame.transform.scale(background, (width, height))
 
 # Initialize chess board
 chess_board = ChessBoard()
@@ -123,9 +118,19 @@ while True:
             sys.exit()
         elif event.type == pygame.VIDEORESIZE:
             win_w, win_h = event.size
+            Settings.update_window_size(win_w, win_h)
+            screen = pygame.display.set_mode((Settings.WINDOW_WIDTH, Settings.WINDOW_HEIGHT), pygame.RESIZABLE)
+            ui_renderer.screen = screen
+            if hasattr(ui_renderer, 'book_view'):
+                ui_renderer.book_view.screen = screen
+            if hasattr(ui_renderer, 'record_view'):
+                ui_renderer.record_view.screen = screen
 
         elif event.type == pygame.MOUSEWHEEL:
-            if getattr(ui_renderer, 'current_tab_index', None) == 2 and hasattr(ui_renderer, 'record_view'):
+            if (getattr(ui_renderer, 'current_tab_index', None) == 2 and
+                hasattr(ui_renderer, 'record_view') and
+                getattr(ui_renderer, 'is_side_panel_visible', None) and
+                ui_renderer.is_side_panel_visible()):
                 # event.y > 0 means scroll up; move content accordingly
                 ui_renderer.record_view.scroll(-event.y * 40)
 
@@ -330,14 +335,17 @@ while True:
                         valid_moves = []
                     continue
             # Handle right menu tab click next
-            if getattr(ui_renderer, 'tab_hit', None):
+            if getattr(ui_renderer, 'tab_hit', None) and getattr(ui_renderer, 'is_side_panel_visible', None) and ui_renderer.is_side_panel_visible():
                 tab_idx = ui_renderer.tab_hit(mouse_pos)
                 if tab_idx != -1:
                     ui_renderer.set_current_tab(tab_idx)
                     continue
             
             # Handle record view row click (tab 2 = "Biên bản" / move record)
-            if getattr(ui_renderer, 'current_tab_index', None) == 2 and hasattr(ui_renderer, 'record_view'):
+            if (getattr(ui_renderer, 'current_tab_index', None) == 2 and
+                hasattr(ui_renderer, 'record_view') and
+                getattr(ui_renderer, 'is_side_panel_visible', None) and
+                ui_renderer.is_side_panel_visible()):
                 record_view = ui_renderer.record_view
                 
                 # Check dropdown item click first (highest priority)

@@ -84,28 +84,59 @@ class UIRenderer:
         self._background_image = background_image
         self.screen.fill(Settings.Colors.BACKGROUND)
         
-        # Scale background in setup mode (60% of original size) and center it
+        # Draw board background using dynamic layout
         if Settings.SETUP_MODE:
             scale = Settings.SETUP_BOARD_SCALE
-            scaled_width = int(background_image.get_width() * scale)
-            scaled_height = int(background_image.get_height() * scale)
+            scaled_width = int(Settings.WIDTH * scale)
+            scaled_height = int(Settings.HEIGHT * scale)
             scaled_background = pygame.transform.scale(background_image, (scaled_width, scaled_height))
             
-            # Center the board within the board area (0..Settings.WIDTH, 50..Settings.HEIGHT+50)
-            board_area_width = Settings.WIDTH  # 810
-            board_area_height = Settings.HEIGHT  # 900
-            bg_x = (board_area_width - scaled_width) // 2
-            bg_y = 50 + (board_area_height - scaled_height) // 2
+            bg_x = Settings.BOARD_X + (Settings.WIDTH - scaled_width) // 2
+            bg_y = Settings.BOARD_Y + (Settings.HEIGHT - scaled_height) // 2
             
             self.screen.blit(scaled_background, (bg_x, bg_y))
         else:
-            # Always draw background in original orientation - only pieces will flip positions
-            self.screen.blit(background_image, (0, 50))
+            scaled_background = pygame.transform.scale(background_image, (Settings.WIDTH, Settings.HEIGHT))
+            self.screen.blit(scaled_background, (Settings.BOARD_X, Settings.BOARD_Y))
     
     def draw_border(self) -> None:
         """Draw the UI border"""
-        border_function = pygame.Rect(809, 50, 592, 850)
+        if Settings.PANEL_MODE == "hidden":
+            return
+        border_function = pygame.Rect(Settings.PANEL_X, Settings.PANEL_Y, Settings.PANEL_W, Settings.PANEL_H)
         pygame.draw.rect(self.screen, Settings.Colors.BLACK, border_function, 1)
+
+    def is_side_panel_visible(self) -> bool:
+        return Settings.PANEL_MODE in ("right", "bottom") and Settings.PANEL_W > 0 and Settings.PANEL_H > 0
+
+    def _get_side_panel_rect(self) -> pygame.Rect:
+        if not self.is_side_panel_visible():
+            return pygame.Rect(0, 0, 0, 0)
+        return pygame.Rect(Settings.PANEL_X, Settings.PANEL_Y, Settings.PANEL_W, Settings.PANEL_H)
+
+    def _sync_panel_viewports(self) -> tuple[pygame.Rect, pygame.Rect]:
+        """
+        Sync Book/Record viewports with current panel layout.
+        Returns (tabs_rect, content_rect).
+        """
+        panel_rect = self._get_side_panel_rect()
+        if panel_rect.width <= 0 or panel_rect.height <= 0:
+            empty = pygame.Rect(0, 0, 0, 0)
+            if hasattr(self.book_view, "set_viewport"):
+                self.book_view.set_viewport(empty)
+            if hasattr(self.record_view, "set_viewport"):
+                self.record_view.set_viewport(empty)
+            return empty, empty
+
+        tab_h = min(50, max(34, panel_rect.height // 5))
+        tabs_rect = pygame.Rect(panel_rect.x, panel_rect.bottom - tab_h, panel_rect.width, tab_h)
+        content_rect = pygame.Rect(panel_rect.x, panel_rect.y, panel_rect.width, max(0, panel_rect.height - tab_h))
+
+        if hasattr(self.book_view, "set_viewport"):
+            self.book_view.set_viewport(content_rect)
+        if hasattr(self.record_view, "set_viewport"):
+            self.record_view.set_viewport(content_rect)
+        return tabs_rect, content_rect
     
     def draw_pieces(self) -> None:
         """Draw all chess pieces"""
@@ -186,36 +217,43 @@ class UIRenderer:
         # if selected_piece is not None and Position.calculate_position(old_position) != Position.calculate_position(selected_piece.position):
         
         cx, cy = Position.calculate_position(new_position)
-        radius = 40
-        line = max(radius-20, 5)
+        scale = Settings.BOARD_SCALE * (Settings.SETUP_BOARD_SCALE if Settings.SETUP_MODE else 1.0)
+        radius = max(18, int(40 * scale))
+        line = max(int(20 * scale), 3)
+        stroke = max(1, int(3 * scale))
         top_left_center = (cx-radius, cy-radius)
         top_right_center = (cx+radius, cy-radius)
         bottom_left_center = (cx-radius, cy+radius)
         bottom_right_center = (cx+radius, cy+radius)
 
-        pygame.draw.line(self.screen, Settings.Colors.GREEN, top_left_center, (top_left_center[0]+line, top_left_center[1]), 3)
-        pygame.draw.line(self.screen, Settings.Colors.GREEN, top_left_center, (top_left_center[0], top_left_center[1]+line), 3)
+        pygame.draw.line(self.screen, Settings.Colors.GREEN, top_left_center, (top_left_center[0]+line, top_left_center[1]), stroke)
+        pygame.draw.line(self.screen, Settings.Colors.GREEN, top_left_center, (top_left_center[0], top_left_center[1]+line), stroke)
 
-        pygame.draw.line(self.screen, Settings.Colors.GREEN, top_right_center, (top_right_center[0]-line, top_right_center[1]), 3)
-        pygame.draw.line(self.screen, Settings.Colors.GREEN, top_right_center, (top_right_center[0], top_right_center[1]+line), 3)
+        pygame.draw.line(self.screen, Settings.Colors.GREEN, top_right_center, (top_right_center[0]-line, top_right_center[1]), stroke)
+        pygame.draw.line(self.screen, Settings.Colors.GREEN, top_right_center, (top_right_center[0], top_right_center[1]+line), stroke)
 
-        pygame.draw.line(self.screen, Settings.Colors.GREEN, bottom_left_center, (bottom_left_center[0]+line, bottom_left_center[1]), 3)
-        pygame.draw.line(self.screen, Settings.Colors.GREEN, bottom_left_center, (bottom_left_center[0], bottom_left_center[1]-line), 3)
+        pygame.draw.line(self.screen, Settings.Colors.GREEN, bottom_left_center, (bottom_left_center[0]+line, bottom_left_center[1]), stroke)
+        pygame.draw.line(self.screen, Settings.Colors.GREEN, bottom_left_center, (bottom_left_center[0], bottom_left_center[1]-line), stroke)
 
-        pygame.draw.line(self.screen, Settings.Colors.GREEN, bottom_right_center, (bottom_right_center[0]-line, bottom_right_center[1]), 3)
-        pygame.draw.line(self.screen, Settings.Colors.GREEN, bottom_right_center, (bottom_right_center[0], bottom_right_center[1]-line), 3)
+        pygame.draw.line(self.screen, Settings.Colors.GREEN, bottom_right_center, (bottom_right_center[0]-line, bottom_right_center[1]), stroke)
+        pygame.draw.line(self.screen, Settings.Colors.GREEN, bottom_right_center, (bottom_right_center[0], bottom_right_center[1]-line), stroke)
 
     def draw_selected_piece(self, selected_piece: ChessPiece | None) -> None:
         """Draw highlight around selected piece"""
         if selected_piece is not None:
             cx, cy = Position.calculate_position(selected_piece.position)
-            pygame.draw.circle(self.screen, Settings.Colors.GREEN, (cx+1.9, cy+1), 44, 2)
+            scale = Settings.BOARD_SCALE * (Settings.SETUP_BOARD_SCALE if Settings.SETUP_MODE else 1.0)
+            radius = max(16, int(44 * scale))
+            stroke = max(1, int(2 * scale))
+            pygame.draw.circle(self.screen, Settings.Colors.GREEN, (int(cx + 2 * scale), int(cy + 1 * scale)), radius, stroke)
     
     def draw_valid_moves(self, valid_moves: list[tuple[int, int]]) -> None:
         """Draw valid move indicators"""
+        scale = Settings.BOARD_SCALE * (Settings.SETUP_BOARD_SCALE if Settings.SETUP_MODE else 1.0)
+        marker_radius = max(4, int(10 * scale))
         for mv in valid_moves:
             mx, my = Position.calculate_position(mv)
-            pygame.draw.circle(self.screen, Settings.Colors.LIGHT_BLUE, (mx, my), 10)
+            pygame.draw.circle(self.screen, Settings.Colors.LIGHT_BLUE, (mx, my), marker_radius)
     
     def draw_in_check(self) -> None:
         """Draw check status with translucent overlay and text"""
@@ -1030,18 +1068,23 @@ class UIRenderer:
 
 
     def draw_right_menu_buttons(self) -> None:
-        """Draw three labeled rectangles starting at (810, 900) with width 50 and keep their rects for hit test."""
-        base_x, base_y = 810, 900
-        box_w, box_h = 197, 50
-        spacing_y = 0
-        small_font = pygame.font.Font(self.font_path, 28)
-
-        # Ensure rects array length matches labels
+        """Draw tabs inside responsive side panel and keep rects for hit testing."""
         self.tabs_rects = []
+        if not self.is_side_panel_visible():
+            return
+
+        tabs_rect, _ = self._sync_panel_viewports()
+        if tabs_rect.width <= 0 or tabs_rect.height <= 0:
+            return
+
+        box_w = tabs_rect.width // max(1, len(self.tabs_labels))
+        box_h = tabs_rect.height
+        small_font = pygame.font.Font(self.font_path, max(18, min(28, int(box_h * 0.56))))
 
         for i, label in enumerate(self.tabs_labels):
-            x = base_x + i * (box_w + spacing_y)
-            rect = pygame.Rect(x, base_y, box_w, box_h)
+            x = tabs_rect.x + i * box_w
+            width = box_w if i < len(self.tabs_labels) - 1 else tabs_rect.right - x
+            rect = pygame.Rect(x, tabs_rect.y, width, box_h)
             self.tabs_rects.append(rect)
 
             # Highlight active tab
@@ -1071,6 +1114,9 @@ class UIRenderer:
     # Function book: Display content under the right menu tabs based on the current tab (current_tab_index).
     def tab_content(self) -> None:
         """Render content under the tabs based on current tab."""
+        if not self.is_side_panel_visible():
+            return
+        self._sync_panel_viewports()
         # 0: Opening (Khai cuộc), 1: Engine (Động cơ), 2: Move record (Biên bản)
         if self.current_tab_index == 0:
             self.book_view.draw_header()

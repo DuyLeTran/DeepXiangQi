@@ -14,10 +14,9 @@ class ChessPiece:
         self.position = new_position
 
     def draw(self, screen: pygame.Surface, rect_width: int = 90, rect_height: int = 90) -> None:
-        # Determine piece size based on current board scaling (setup mode vs normal)
-        base_cell_size = Settings.BASE_WIDTH / 9  # 810 / 9 = 90
-        scale = Settings.SETUP_BOARD_SCALE if Settings.SETUP_MODE else 1.0
-        cell_size = int(base_cell_size * scale)
+        # Determine piece size based on runtime board layout and setup scale
+        setup_scale = Settings.SETUP_BOARD_SCALE if Settings.SETUP_MODE else 1.0
+        cell_size = int(90 * Settings.BOARD_SCALE * setup_scale)
 
         rect_width = rect_height = cell_size
 
