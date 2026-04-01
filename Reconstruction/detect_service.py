@@ -678,7 +678,7 @@ class DetectionService:
                 if on_notify:
                     on_notify(
                         f"Nhận diện: {len(pred_boxes_crop)} quân  "
-                        f"(không tính được tọa độ lưới)  "
+                        f"(không tính được tọa độ 4 góc bàn cờ)  "
                         f"{t_total * 1000:.0f}ms"
                     )
                 from App.configuration import Settings
