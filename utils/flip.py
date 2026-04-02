@@ -65,26 +65,28 @@ class FlipAnimator:
         # Respect setup mode scaling and centering, same logic as UIRenderer.draw_background
         if Settings.SETUP_MODE:
             scale = Settings.SETUP_BOARD_SCALE
-            scaled_width = int(bg.get_width() * scale)
-            scaled_height = int(bg.get_height() * scale)
+            scaled_width = int(Settings.WIDTH * scale)
+            scaled_height = int(Settings.HEIGHT * scale)
             scaled_bg = pygame.transform.scale(bg, (scaled_width, scaled_height))
 
-            board_area_width = Settings.WIDTH
-            board_area_height = Settings.HEIGHT
-            bg_x = (board_area_width - scaled_width) // 2
-            bg_y = 50 + (board_area_height - scaled_height) // 2
+            bg_x = Settings.BOARD_X + (Settings.WIDTH - scaled_width) // 2
+            bg_y = Settings.BOARD_Y + (Settings.HEIGHT - scaled_height) // 2
 
             self.screen.blit(scaled_bg, (bg_x, bg_y))
         else:
-            # Original board: draw at fixed offset (0, 50)
-            self.screen.blit(bg, (0, 50))
+            # Original board: draw at board origin
+            scaled_bg = pygame.transform.scale(bg, (Settings.WIDTH, Settings.HEIGHT))
+            self.screen.blit(scaled_bg, (Settings.BOARD_X, Settings.BOARD_Y))
         
         # Draw border
         self.draw_border_cb()
 
         # Draw interpolated pieces (only pieces animate, board stays fixed)
-        # Compute board center dynamically (center of board area), works for all scales
-        board_center = (Settings.WIDTH // 2, 50 + Settings.HEIGHT // 2)
+        # Compute board center dynamically from the real board layout
+        board_center = (
+            Settings.BOARD_X + Settings.WIDTH // 2,
+            Settings.BOARD_Y + Settings.HEIGHT // 2
+        )
 
         for piece, start_c, dest_c in self._anim_items:
             if t < 0.5:
@@ -189,36 +191,32 @@ class FlipAnimator:
         control the flipped state explicitly for the animation.
         """
         x, y = grid_pos
-        # Determine board parameters depending on setup mode
-        scale = Settings.SETUP_BOARD_SCALE if getattr(Settings, "SETUP_MODE", False) else 1.0
+        board_scale = Settings.BOARD_SCALE
+        setup_scale = Settings.SETUP_BOARD_SCALE if getattr(Settings, "SETUP_MODE", False) else 1.0
+        total_scale = board_scale * setup_scale
 
         if Settings.SETUP_MODE:
-            # Background scaled and centered as in renderer & Position
-            scaled_width = int(Settings.WIDTH * scale)
-            scaled_height = int(Settings.HEIGHT * scale)
-            bg_x = (Settings.WIDTH - scaled_width) // 2
-            bg_y = 50 + (Settings.HEIGHT - scaled_height) // 2
-
-            offset_x = 45 * scale
-            offset_y = 45 * scale
-
+            scaled_width = int(Settings.BASE_WIDTH * total_scale)
+            scaled_height = int(Settings.BASE_HEIGHT * total_scale)
+            bg_x = Settings.BOARD_X + (Settings.WIDTH - scaled_width) // 2
+            bg_y = Settings.BOARD_Y + (Settings.HEIGHT - scaled_height) // 2
+            offset_x = 45 * total_scale
+            offset_y = 45 * total_scale
             base_x = bg_x + offset_x
             base_y = bg_y + offset_y
-            spacing = 90 * scale
+            spacing = 90 * total_scale
         else:
-            base_x = 45
-            base_y = 95
-            spacing = 90
+            base_x = Settings.BOARD_X + 45 * board_scale
+            base_y = Settings.BOARD_Y + 45 * board_scale
+            spacing = 90 * board_scale
 
-        # Apply flip mapping
-        if not flipped:
-            cx = base_x + (x - 1) * spacing
-            cy = base_y + y * spacing
-        else:
-            fx = 10 - x
-            fy = 9 - y
-            cx = base_x + (fx - 1) * spacing
-            cy = base_y + fy * spacing
+        # Apply flip mapping only for on-board positions, matching Position.calculate_position
+        if flipped and (1 <= x <= 9) and (0 <= y <= 9):
+            x = 10 - x
+            y = 9 - y
+
+        cx = base_x + (x - 1) * spacing
+        cy = base_y + y * spacing
 
         return int(cx), int(cy)
 
@@ -244,10 +242,11 @@ class FlipAnimator:
         image_path = f'Piece/{color_folder}/{image_name}.png'
         surf = pygame.image.load(image_path).convert_alpha()
 
-        # Scale piece size according to setup mode to match board cell size
-        base_cell_size = Settings.BASE_WIDTH / 9  # 810 / 9 = 90
-        scale = Settings.SETUP_BOARD_SCALE if getattr(Settings, "SETUP_MODE", False) else 1.0
-        cell_size = int(base_cell_size * scale)
+        # Scale piece size consistently with runtime board scale
+        total_scale = Settings.BOARD_SCALE * (
+            Settings.SETUP_BOARD_SCALE if getattr(Settings, "SETUP_MODE", False) else 1.0
+        )
+        cell_size = int((Settings.BASE_WIDTH / 9) * total_scale)
         surf = pygame.transform.scale(surf, (cell_size, cell_size))
         return surf
 
