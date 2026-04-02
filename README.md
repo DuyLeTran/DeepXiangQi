@@ -2,7 +2,7 @@
 
 A desktop **Xiangqi (Chinese Chess)** application built with Python and Pygame, featuring an **AI-powered board reconstruction** system that detects and reconstructs piece positions from real-world photos or screen captures.
 <p align="center">
-<img src="XiangQi-demo.gif" width="720" alt="XiangQi Demo">
+<img src="demo.gif" width="720" alt="XiangQi Demo">
 </p>
 > *The demo above shows the full workflow: launching the app, playing moves, using the board reconstruction feature from a screen capture, and navigating the move record.*
 
@@ -12,7 +12,7 @@ A desktop **Xiangqi (Chinese Chess)** application built with Python and Pygame, 
 
 This project is accompanied by a research paper describing the AI pipeline design, model training, and evaluation results. If you want to learn more about the technical approach — including the dual-model detection strategy, homography-based board localization, and the piece-position correction algorithm — please refer to the paper:
 
-[**"Xiangqi Board Reconstruction Using Computer Vision and Deep Learning"**](https://drive.google.com/file/d/1lIpAoEM14-YhtANV4rW6AdYe1Z6EWL3e/view?usp=sharing)
+[**"Xiangqi Board Reconstruction Using Computer Vision and Deep Learning"**](https://drive.google.com/file/d/1tQi0a4f-oJax1pRPOsHbCR8d4d7WC9H7/view?usp=sharing)
 
 
 **Dataset (Roboflow):** [XiangQi Dataset](https://universe.roboflow.com/duytranle/xiangqi-ubjij/dataset/18)
