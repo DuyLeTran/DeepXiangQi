@@ -19,7 +19,6 @@ class Navigation:
         
         # Parse move string: "X1 (1,0) (1,1)"
         parts = self.game_tree.current.move.split(' ')
-        piece_name = parts[0]
         old_pos_str = parts[1].strip('()')
         new_pos_str = parts[2].strip('()')
         old_position = tuple(map(int, old_pos_str.split(',')))
@@ -27,8 +26,9 @@ class Navigation:
         
         # Find the piece currently at new_position (the piece that just moved)
         moved_piece = self.chess_board.get_piece_at(new_position)
-        
-        if moved_piece and moved_piece.name == piece_name:
+        # Do not require piece_name to match: after FEN reload, internal names
+        # (X1 vs X9) can differ from the saved tree while positions stay correct.
+        if moved_piece:
             # Move piece back to its original position
             moved_piece.move_to(old_position)
             
@@ -68,7 +68,6 @@ class Navigation:
         
         # Parse move string: "X1 (1,0) (1,1)"
         parts = child_node.move.split(' ')
-        piece_name = parts[0]
         old_pos_str = parts[1].strip('()')
         new_pos_str = parts[2].strip('()')
         old_position = tuple(map(int, old_pos_str.split(',')))
@@ -76,7 +75,7 @@ class Navigation:
         
         # Find the piece at old_position
         moved_piece = self.chess_board.get_piece_at(old_position)
-        if moved_piece and moved_piece.name == piece_name:
+        if moved_piece:
             # Check for any piece at new_position (will be captured)
             captured_piece = self.chess_board.get_piece_at(new_position)
             if captured_piece:
@@ -174,22 +173,20 @@ class Navigation:
         for node in path[1:]:
             if node.move:
                 parts = node.move.split(' ')
-                piece_name = parts[0]
                 old_pos_str = parts[1].strip('()')
                 new_pos_str = parts[2].strip('()')
                 old_position = tuple(map(int, old_pos_str.split(',')))
                 new_position = tuple(map(int, new_pos_str.split(',')))
                 
                 moved_piece = self.chess_board.get_piece_at(old_position)
-                if moved_piece and moved_piece.name == piece_name:
-                    captured_piece = self.chess_board.get_piece_at(new_position)
-                    if captured_piece:
-                        captured_piece.position = (-1, -1)
-                        # Refresh the captured_piece reference with the current board object
-                        # so that going backward can restore it correctly
-                        node.captured_piece = captured_piece
-                    moved_piece.move_to(new_position)
-                    self.chess_board.switch_turn()
+                if not moved_piece:
+                    return False
+                captured_piece = self.chess_board.get_piece_at(new_position)
+                if captured_piece:
+                    captured_piece.position = (-1, -1)
+                    node.captured_piece = captured_piece
+                moved_piece.move_to(new_position)
+                self.chess_board.switch_turn()
             
             # Advance to this node in the tree
             # Find the child index of this node under its parent

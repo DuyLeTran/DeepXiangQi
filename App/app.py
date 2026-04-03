@@ -13,6 +13,7 @@ from utils.storeGameData import GameDataTree
 from utils.setupMode import SetupMode
 from utils.navigation import Navigation
 from utils.fen import FENHandler
+from utils.save_load import apply_loaded_game, load_game_json, save_game_json
 from utils.image_upload import upload_image
 from utils.screen_capture import capture_screen_region, cleanup_temp_files
 from Reconstruction.detect_service import DetectionService
@@ -202,11 +203,35 @@ while True:
                 #     # TODO: Implement input FEN
                 #     print("Nhập FEN - Chức năng chưa được triển khai")
                 elif menu_item_idx == 4:  # "Mở ván cờ"
-                    # TODO: Implement load game
-                    print("Mở ván cờ - Chức năng chưa được triển khai")
+                    try:
+                        loaded = load_game_json(None)
+                        if loaded is not None:
+                            game_tree, root_fen, path_indices = loaded
+                            navigation = apply_loaded_game(
+                                chess_board, game_tree, root_fen, path_indices
+                            )
+                            if hasattr(ui_renderer, "record_view"):
+                                ui_renderer.record_view.game_tree = game_tree
+                                ui_renderer.record_view.sync_with_tree()
+                            selected_piece = None
+                            old_position = None
+                            valid_moves = []
+                            Settings.SETUP_MODE = False
+                            ui_renderer.checkmate_notification_dismissed = False
+                            ui_renderer.show_notification("Đã mở ván cờ.")
+                    except Exception as exc:
+                        ui_renderer.show_notification(f"Lỗi mở ván cờ: {exc}")
                 elif menu_item_idx == 5:  # "Lưu ván cờ"
-                    # TODO: Implement settings
-                    print("Lưu ván cờ - Chức năng chưa được triển khai")
+                    try:
+                        out_path = save_game_json(
+                            chess_board, game_tree, navigation, None
+                        )
+                        if out_path:
+                            ui_renderer.show_notification(
+                                f"Đã lưu ván cờ: {os.path.basename(out_path)}"
+                            )
+                    except Exception as exc:
+                        ui_renderer.show_notification(f"Lỗi lưu ván cờ: {exc}")
                 elif menu_item_idx == 6:  # "Thoát"
                     cleanup_temp_files()
                     pygame.quit()

@@ -128,7 +128,7 @@ class Settings:
     SHOW_UPLOADED_IMAGE: bool = False  # show uploaded image in a Tkinter window
     
     # Show/hide AI results
-    DEV_MODE : bool = True
+    DEV_MODE : bool = False
 
     # Device using for detection
     DEVICE : str = 'cpu'
